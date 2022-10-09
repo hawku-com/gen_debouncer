@@ -1,5 +1,5 @@
 defmodule GenDebouncerTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   @complex_payload %{a: 2, b: 1}
   @simple_payload :simple_payload
@@ -18,7 +18,7 @@ defmodule GenDebouncerTest do
   test "init" do
     assert {:ok, state} = GenDebouncer.init({@worker, @interval})
     assert state == %GenDebouncer.State{worker: @worker, interval: @interval}
-    assert_receive :tick, @interval*2
+    assert_receive :tick, @interval * 3
   end
 
   describe "handle_cast, key does not exist" do
@@ -71,17 +71,17 @@ defmodule GenDebouncerTest do
   end
 
   test "handle_info" do
-      waiting_list = %{
-        key: %GenDebouncer.Fragment{
-          last_updated: ~U"2022-10-09 10:21:16.711564Z",
-          payloads: MapSet.new([@complex_payload, @simple_payload])
-        }
+    waiting_list = %{
+      key: %GenDebouncer.Fragment{
+        last_updated: ~U"2022-10-09 10:21:16.711564Z",
+        payloads: MapSet.new([@complex_payload, @simple_payload])
       }
+    }
 
-      state= %GenDebouncer.State{worker: @worker, interval: 1, waiting_list: waiting_list}
+    state = %GenDebouncer.State{worker: @worker, interval: 1, waiting_list: waiting_list}
 
     assert {:noreply, new_state} = GenDebouncer.handle_info(:tick, state)
-    assert_receive {:key,  %MapSet{map: %{:simple_payload => [], %{a: 2, b: 1} => []}}}
+    assert_receive {:key, %MapSet{map: %{:simple_payload => [], %{a: 2, b: 1} => []}}}
     assert new_state.waiting_list == %{}
   end
 end
