@@ -47,7 +47,7 @@ defmodule GenDebouncerTest do
       waiting_list = %{
         key: %GenDebouncer.Fragment{
           last_updated: ~U"2022-10-09 10:21:16.711564Z",
-          payloads: MapSet.new([%{a: 2, b: 1}])
+          payloads: MapSet.new([@complex_payload])
         }
       }
 
@@ -81,7 +81,7 @@ defmodule GenDebouncerTest do
     state = %GenDebouncer.State{worker: @worker, interval: 1, waiting_list: waiting_list}
 
     assert {:noreply, new_state} = GenDebouncer.handle_info(:tick, state)
-    assert_receive {:key, %MapSet{map: %{:simple_payload => [], %{a: 2, b: 1} => []}}}
+    assert_receive {:key, %MapSet{map: %{:simple_payload => [], @complex_payload => []}}}
     assert new_state.waiting_list == %{}
   end
 end
