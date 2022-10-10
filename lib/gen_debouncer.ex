@@ -106,19 +106,19 @@ defmodule GenDebouncer do
 
   @callback work(key :: any(), payload :: [any()]) :: :ok
 
-  @spec start_link(module(), non_neg_integer(), Keyword.t()) ::
+  @spec start_link(module(), non_neg_integer(), GenServer.options()) ::
           GenServer.on_start()
   def start_link(worker, interval, opts \\ []) do
     GenServer.start_link(__MODULE__, {worker, interval}, opts)
   end
 
-  @spec schedule_work(key :: any(), key :: any(), payload :: any()) ::
+  @spec schedule_work(debouncer :: GenServer.name(), key :: any(), payload :: any()) ::
           :ok | {:error, term()}
   def schedule_work(debouncer, key, payload) do
     GenServer.cast(debouncer, {:schedule_work, payload, key})
   end
 
-  @spec schedule_work_batch(key :: any(), key :: any(), payload :: [any()]) ::
+  @spec schedule_work_batch(debouncer :: GenServer.name(), key :: any(), payload :: [any()]) ::
           :ok | {:error, term()}
   def schedule_work_batch(debouncer, key, payloads) do
     GenServer.cast(debouncer, {:schedule_work_batch, payloads, key})
