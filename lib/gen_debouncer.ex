@@ -8,6 +8,7 @@ defmodule GenDebouncer do
 
     @type t :: %__MODULE__{
             worker: module(),
+            interval: non_neg_integer(),
             waiting_list: %{any() => GenDebouncer.Fragment.t()}
           }
 
@@ -135,7 +136,7 @@ defmodule GenDebouncer do
       interval: interval
     }
 
-    schedule_tick(state)
+    :timer.send_interval(interval, self(), :tick)
 
     {:ok, state}
   end
@@ -151,7 +152,6 @@ defmodule GenDebouncer do
 
   @impl true
   def handle_info(:tick, state) do
-    schedule_tick(state)
     workload = State.work_to_schedule(state)
 
     Enum.each(workload, fn {key, payloads} ->
@@ -161,9 +161,5 @@ defmodule GenDebouncer do
     state = State.clean_work(state, Enum.map(workload, &elem(&1, 0)))
 
     {:noreply, state}
-  end
-
-  defp schedule_tick(%State{interval: interval}) do
-    Process.send_after(self(), :tick, interval)
   end
 end
