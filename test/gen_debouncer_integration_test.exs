@@ -12,7 +12,9 @@ defmodule GenDebouncerIntegrationTest do
 
   test "Integration test" do
     Process.register(self(), __MODULE__)
-    {:ok, pid} = GenDebouncer.start_link(Worker, 1)
+    # the interval here must be long enough to catch bugs
+    # related to time units.
+    {:ok, pid} = GenDebouncer.start_link(Worker, 1000)
 
     batch1 =
       [6, 7, 2, 8, 2, 10, 10, 6, 3, 3, 7, 8, 1, 5, 4] ++
@@ -31,13 +33,14 @@ defmodule GenDebouncerIntegrationTest do
     ]
     |> Enum.each(fn {key, batch} -> GenDebouncer.schedule_work_batch(pid, key, batch) end)
 
-    assert_receive {1, set_1}, 2000
+    refute_receive _, 1000
+    assert_receive {1, set_1}, 3000
     assert set_1 == MapSet.new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
-    assert_receive {2, set_2}, 2000
+    assert_receive {2, set_2}, 3000
     assert set_2 == MapSet.new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
-    assert_receive {3, set_3}, 2000
+    assert_receive {3, set_3}, 3000
     assert set_3 == MapSet.new([1, 2, 4, 5, 6, 7, 8, 9, 10])
   end
 end
